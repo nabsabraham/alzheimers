@@ -8,9 +8,26 @@ Created on Thu Apr 18 08:30:02 2019
 import torch
 import numpy as np 
 import matplotlib.pyplot as plt 
+import torchvision.utils as vutils 
 
+def multi_accuracy(preds, labels):
+    labels = labels.float()
+    ps = torch.exp(preds)
+    _, top_ps = torch.topk(ps,1)
+    top_ps = top_ps.reshape(labels.shape).float()
+    acc = torch.mean(torch.eq(top_ps, labels).float()) 
+    return acc
+        
+def binary_accuracy(preds, labels):
+    labels = labels.float()
+    p = (preds >= 0.5)
+    p = p.float()
+    acc = torch.mean(torch.eq(p,labels).float())
+    return acc
+
+# udacity
 def view_classify(img, ps, gt):
-    ''' Function for viewing an image and it's predicted classes.
+    ''' Function for viewing an image and it's predicted classes as a bar graph
     '''
     ps = ps.cpu().detach().numpy().squeeze()
     img = img.cpu().detach().squeeze(0)
@@ -30,27 +47,42 @@ def view_classify(img, ps, gt):
     ax2.set_xlim(0, 1.1)
 
 #http://snappishproductions.com/blog/2018/01/03/class-activation-mapping-in-pytorch.html
-def getCAM(feature_conv, weight_fc, class_idx):
-    _, nc, h, w = feature_conv.shape
-    cam = weight_fc[class_idx].dot(feature_conv.reshape((nc, h*w)))
-    cam = cam.reshape(h, w)
+#adapted version
+def get_cam(features_np, weights_np, top_idx):
+    nc, h, w = features_np.shape
+    F = features_np.reshape((nc, h*w))
+    W = weights_np[top_idx]
+    
+    cam = np.dot(W,F)
+    cam = np.reshape(cam, (h,w))
     cam = cam - np.min(cam)
     cam_img = cam / np.max(cam)
-    return [cam_img]
+    return cam_img
     
+def plot_hist(epochs, train, val, data_name):
+    plt.figure(dpi=150)
+    e = np.arange(0, epochs+1,1)
+    plt.plot(e, train, label='Train'+ " " + str(data_name))
+    plt.plot(e, val, label='Val'+ " " + str(data_name))
+    plt.legend()
+    plt.xlabel('Epochs')
+    plt.ylabel(str(data_name) + " Values")
+    plt.grid()
+    plt.title(str(data_name) + " Results")
+
+def plot_grid(torch_preds, name):
+    torch_preds = torch_preds.cpu().detach()
+    grid_img = vutils.make_grid(torch_preds, nrow=4)
+    plt.figure()
+    plt.imshow(grid_img.permute(1, 2, 0))
+    plt.title(str(name))
     
 # https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py
 
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
     def __init__(self, patience=7, verbose=False):
-        """
-        Args:
-            patience (int): How long to wait after last time validation loss improved.
-                            Default: 7
-            verbose (bool): If True, prints a message for each validation loss improvement. 
-                            Default: False
-        """
+
         self.patience = patience
         self.verbose = verbose
         self.counter = 0

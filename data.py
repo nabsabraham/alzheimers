@@ -3,6 +3,9 @@
 """
 Created on Tue Apr 16 18:43:36 2019
 
+This script gets the datasets with labels using ImageFolder
+Running main will show a demo of how to use the get_dataloaders function
+
 @author: nabila
 """
 import torch
@@ -17,11 +20,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 random_seed = 42
-
-#class adni(torch.utils.data.Dataset):
-#    def __init__(self, data_path):
-#        super().__init__()
-#        
+     
     
 def get_dataloaders(data_path, val_split, batch_size, shuffle=True):
     t = transforms.Compose([transforms.Resize((150,150)), 

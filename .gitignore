@@ -1,3 +1,6 @@
 .ipynb_checkpoints/
 __pycache__/
 *.pt
+Training Results/
+old/
+train_single_vgg_viz.py
